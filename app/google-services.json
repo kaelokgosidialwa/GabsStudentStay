@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "873685965922",
+    "project_id": "gabs-student-stay-5f5dd",
+    "storage_bucket": "gabs-student-stay-5f5dd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:873685965922:android:465e258b8f26f14425853b",
+        "android_client_info": {
+          "package_name": "com.example.gabsstudentstay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeE-asHAT5ad6num2F-HCG_5rwpBIdH6c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
