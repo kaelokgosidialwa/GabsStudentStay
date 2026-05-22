@@ -13,8 +13,6 @@ object ListingFilter {
     private val BAC_LOCATION = Pair(-24.6564, 25.9086)
     private const val NEAR_RADIUS_KM = 2.0
 
-    // ─── DISTANCE CALCULATION ───
-    // uses Haversine formula to calculate distance between two coordinates
     fun distanceKm(
         lat1: Double, lon1: Double,
         lat2: Double, lon2: Double
@@ -29,7 +27,6 @@ object ListingFilter {
         return earthRadiusKm * c
     }
 
-    // ─── SECTION FILTERS ───
 
     // Latest listings - sorted by date newest first
     fun latestListings(listings: List<Listing>): List<Listing> {
@@ -54,18 +51,6 @@ object ListingFilter {
         }
     }
 
-    // Near tenant - within 2km of tenant's location
-    fun nearTenant(
-        listings: List<Listing>,
-        tenantLat: Double,
-        tenantLon: Double
-    ): List<Listing> {
-        return listings.filter { listing ->
-            val lat = listing.position.latitude
-            val lon = listing.position.longitude
-            distanceKm(lat, lon, tenantLat, tenantLon) <= NEAR_RADIUS_KM
-        }
-    }
 
     // Budget friendly - listings within tenant's max budget
     fun budgetFriendly(
@@ -108,9 +93,8 @@ object ListingFilter {
                         listing.shortDesc.contains(keyword, ignoreCase = true) ||
                                 listing.longDesc.contains(keyword, ignoreCase = true)
                     }
-            // ← NEW tag matching
             val tagMatch = preferences.preferredTags.isEmpty() ||
-                    preferences.preferredTags.any { tag ->
+                    preferences.preferredTags.all { tag ->
                         listing.tags.contains(tag)
                     }
 
@@ -118,7 +102,6 @@ object ListingFilter {
         }
     }
 
-    // Available listings only
     fun availableOnly(listings: List<Listing>): List<Listing> {
         return listings.filter { it.available }
     }
@@ -129,19 +112,7 @@ object ListingFilter {
     ): List<Listing> {
         return listings.filter { listing ->
             val listingRooms = rooms.filter { it.listingID == listing.listingID }
-            // keep listing if it has at least one available room
-            // or if no rooms fetched yet (don't hide prematurely)
             listingRooms.isEmpty() || listingRooms.any { it.available }
-        }
-    }
-
-    fun filterByAvailabilityDate(
-        listings: List<Listing>,
-        moveInDate: Date
-    ): List<Listing> {
-        return listings.filter { listing ->
-            listing.availabilityDate.before(moveInDate) ||
-                    listing.availabilityDate == moveInDate
         }
     }
 
