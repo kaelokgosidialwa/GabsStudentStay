@@ -10,7 +10,7 @@ enum class UserRole {
 data class User(
     val userID: String = "",
     val email: String = "",
-    val username: String = "",  // ← NEW
+    val username: String = "",
     val name: String = "",
     val phone: String = "",
     val role: String = UserRole.TENANT.name,

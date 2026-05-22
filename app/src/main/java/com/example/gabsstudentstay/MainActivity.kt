@@ -18,6 +18,7 @@ import com.example.gabsstudentstay.ui.theme.GabsStudentStayTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             GabsStudentStayTheme {
