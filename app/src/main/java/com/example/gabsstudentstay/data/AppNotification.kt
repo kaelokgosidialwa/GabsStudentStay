@@ -13,11 +13,11 @@ enum class NotificationType {
 
 data class AppNotification(
     val notificationID: String = "",
-    val userID: String = "",        // recipient
+    val userID: String = "",
     val title: String = "",
     val message: String = "",
     val type: String = NotificationType.BOOKING_MADE.name,
     val read: Boolean = false,
     val createdAt: Date = Date(),
-    val relatedID: String = ""      // listingID or bookingID for navigation
+    val relatedID: String = ""
 )

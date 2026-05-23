@@ -7,7 +7,6 @@ object BookingRepository {
 
     private val firestore = FirebaseFirestore.getInstance()
 
-    // fetch all bookings for a tenant
     fun getTenantBookings(
         tenantID: String,
         onSuccess: (List<Booking>) -> Unit,
@@ -27,31 +26,30 @@ object BookingRepository {
             }
     }
 
-    // cancel a booking
     fun cancelBooking(
         booking: Booking,
         cancelledByTenant: Boolean,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // update booking status to cancelled
+
         firestore.collection("bookings")
             .document(booking.bookingID)
             .update("status", BookingStatus.CANCELLED.name)
             .addOnSuccessListener {
-                // make room available again
+
                 firestore.collection("rooms")
                     .document(booking.roomID)
                     .update("available", true)
                     .addOnSuccessListener {
-                        // get listing to find lessorID
+
                         firestore.collection("listings")
                             .document(booking.listingID)
                             .get()
                             .addOnSuccessListener { doc ->
                                 val listing = doc.toObject(Listing::class.java)
                                 if (listing != null && cancelledByTenant) {
-                                    // notify lessor
+
                                     NotificationRepository.sendNotification(
                                         userID = listing.lessorID,
                                         title = "Booking Cancelled",

@@ -66,22 +66,22 @@ fun NotificationsScreen(navController: NavController) {
                     isLoading = false
                     return@getCurrentUser
                 }
+
+
                 NotificationRepository.getNotifications(
                     userID = user.userID,
                     onSuccess = { fetchedNotifications ->
                         notifications = fetchedNotifications
                         isLoading = false
-                        // mark all as read when screen opens
-                        NotificationRepository.markAllAsRead(userID = user.userID)
                     },
-                    onError = {
-                        errorMessage = it
+                    onError = { error ->
+                        errorMessage = error
                         isLoading = false
                     }
                 )
             },
-            onError = {
-                errorMessage = it
+            onError = { error ->
+                errorMessage = error
                 isLoading = false
             }
         )

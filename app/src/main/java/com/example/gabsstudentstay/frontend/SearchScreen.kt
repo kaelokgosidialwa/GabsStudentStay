@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,23 +49,24 @@ import com.example.gabsstudentstay.navigation.Screen
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(navController: NavController) {
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var allListings by remember { mutableStateOf<List<Listing>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     val focusRequester = remember { FocusRequester() }
 
-    // filtered results based on query
     val results = remember(query, allListings) {
         if (query.isBlank()) emptyList()
         else allListings.filter { listing ->
             listing.shortDesc.contains(query, ignoreCase = true) ||
                     listing.longDesc.contains(query, ignoreCase = true) ||
                     listing.address.contains(query, ignoreCase = true) ||
-                    listing.city.contains(query, ignoreCase = true)
+                    listing.city.contains(query, ignoreCase = true) ||
+                    listing.tags.any { tag ->
+                        tag.contains(query, ignoreCase = true)
+                    }
         }
     }
 
-    // fetch all listings once on launch
     LaunchedEffect(Unit) {
         ListingRepository.getListings(
             onSuccess = { listings ->
@@ -73,7 +75,6 @@ fun SearchScreen(navController: NavController) {
             },
             onError = { isLoading = false }
         )
-        // auto focus the search field
         focusRequester.requestFocus()
     }
 
@@ -127,7 +128,6 @@ fun SearchScreen(navController: NavController) {
                 .padding(innerPadding)
         ) {
             when {
-                // empty query — show prompt
                 query.isBlank() -> {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
@@ -146,14 +146,12 @@ fun SearchScreen(navController: NavController) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Try searching by description, address or city",
+                            text = "Try searching by description, address, city, or tags",
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-
-                // no results found
                 results.isEmpty() -> {
                     Column(
                         modifier = Modifier.align(Alignment.Center),
@@ -173,8 +171,6 @@ fun SearchScreen(navController: NavController) {
                         )
                     }
                 }
-
-                // show results
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),

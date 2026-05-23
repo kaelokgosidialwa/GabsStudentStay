@@ -9,7 +9,6 @@ object NotificationRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val notificationsCollection = firestore.collection("notifications")
 
-    // send a notification to a user
     fun sendNotification(
         userID: String,
         title: String,
@@ -40,12 +39,12 @@ object NotificationRepository {
             }
     }
 
-    // fetch all notifications for a user
     fun getNotifications(
         userID: String,
         onSuccess: (List<AppNotification>) -> Unit,
         onError: (String) -> Unit
     ) {
+
         notificationsCollection
             .whereEqualTo("userID", userID)
             .orderBy("createdAt", Query.Direction.DESCENDING)
@@ -61,7 +60,6 @@ object NotificationRepository {
             }
     }
 
-    // mark a notification as read
     fun markAsRead(
         notificationID: String,
         onSuccess: () -> Unit = {},
@@ -76,7 +74,6 @@ object NotificationRepository {
             }
     }
 
-    // mark all notifications as read for a user
     fun markAllAsRead(
         userID: String,
         onSuccess: () -> Unit = {},
@@ -102,12 +99,12 @@ object NotificationRepository {
             }
     }
 
-    // get unread count for a user
     fun getUnreadCount(
         userID: String,
         onSuccess: (Int) -> Unit,
         onError: (String) -> Unit
     ) {
+
         notificationsCollection
             .whereEqualTo("userID", userID)
             .whereEqualTo("read", false)
@@ -120,7 +117,6 @@ object NotificationRepository {
             }
     }
 
-    // send new listing match notifications to matching tenants
     fun notifyMatchingTenants(
         listing: Listing,
         onSuccess: () -> Unit = {},
@@ -151,7 +147,6 @@ object NotificationRepository {
                     budgetMatch && areaMatch && keywordMatch
                 }
 
-                // send notification to each matching tenant
                 matchingTenants.forEach { tenant ->
                     sendNotification(
                         userID = tenant.userID,

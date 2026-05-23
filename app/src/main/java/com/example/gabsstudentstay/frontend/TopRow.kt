@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Notifications
@@ -65,22 +63,26 @@ fun TopRow(navController: NavController) {
     var showAccountSheet by remember { mutableStateOf(false) }
     var isSignedIn by remember { mutableStateOf(UserRepository.isSignedIn()) }
     var showPhonePrompt by remember { mutableStateOf(false) }
-    var unreadCount by remember { mutableStateOf(0) }  // ← moved up here
+    var unreadCount by remember { mutableStateOf(0) }
     val sheetState = rememberModalBottomSheetState()
 
-    // ← moved up here
+    // Fetch unread count
     LaunchedEffect(Unit) {
         UserRepository.getCurrentUser(
             onSuccess = { user ->
                 user?.let {
                     NotificationRepository.getUnreadCount(
                         userID = it.userID,
-                        onSuccess = { count -> unreadCount = count },
-                        onError = { }
+                        onSuccess = { count ->
+                            unreadCount = count
+                        },
+                        onError = { error ->
+                        }
                     )
                 }
             },
-            onError = { }
+            onError = { error ->
+            }
         )
     }
 
@@ -92,48 +94,45 @@ fun TopRow(navController: NavController) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
+        // Account icon
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = "Account",
+            modifier = Modifier
+                .size(48.dp)
+                .clickable { showAccountSheet = true },
+            tint = MaterialTheme.colorScheme.onSurface
+        )
+
+        // Notifications bell with badge
+        Box {
             Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Account",
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notifications",
                 modifier = Modifier
-                    .size(48.dp)
-                    .clickable { showAccountSheet = true },
+                    .size(28.dp)
+                    .clickable {
+                        if (UserRepository.isSignedIn()) {
+                            navController.navigate(Screen.Notifications.route)
+                        }
+                    },
                 tint = MaterialTheme.colorScheme.onSurface
             )
-
-            Box {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notifications",
+            if (unreadCount > 0) {
+                Box(
                     modifier = Modifier
-                        .size(28.dp)
-                        .clickable {
-                            if (UserRepository.isSignedIn()) {
-                                navController.navigate(Screen.Notifications.route)
-                            }
-                        },
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-                if (unreadCount > 0) {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.error)
-                            .align(Alignment.TopEnd),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (unreadCount > 9) "9+" else unreadCount.toString(),
-                            fontSize = 9.sp,
-                            color = MaterialTheme.colorScheme.onError,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.error)
+                        .align(Alignment.TopEnd),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (unreadCount > 9) "9+" else unreadCount.toString(),
+                        fontSize = 9.sp,
+                        color = MaterialTheme.colorScheme.onError,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -143,19 +142,20 @@ fun TopRow(navController: NavController) {
                 .weight(0.6f)
                 .height(36.dp)
                 .padding(horizontal = 8.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(18.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { navController.navigate(Screen.Search.route) },
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = "Search...",
+                text = "Search",
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
         }
 
+        // Filter/Search icons
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -163,9 +163,7 @@ fun TopRow(navController: NavController) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                modifier = Modifier
-                    .size(36.dp)
-                    .clickable { },
+                modifier = Modifier.size(36.dp),
                 tint = MaterialTheme.colorScheme.onSurface
             )
             Icon(
@@ -183,6 +181,7 @@ fun TopRow(navController: NavController) {
         }
     }
 
+    // Account Bottom Sheet
     if (showAccountSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAccountSheet = false },
@@ -190,7 +189,7 @@ fun TopRow(navController: NavController) {
         ) {
             AccountBottomSheet(
                 isSignedIn = isSignedIn,
-                navController = navController,  // ← add this
+                navController = navController,
                 onSignInSuccess = {
                     isSignedIn = true
                     showAccountSheet = false
@@ -218,7 +217,7 @@ fun TopRow(navController: NavController) {
         }
     }
 
-    // phone prompt dialog
+    // Phone prompt dialog for lessors
     if (showPhonePrompt) {
         AlertDialog(
             onDismissRequest = {
@@ -301,8 +300,6 @@ fun AccountBottomSheet(
             )
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
-
         if (isSignedIn) {
             Button(
                 onClick = {
@@ -358,8 +355,6 @@ fun AccountBottomSheet(
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -446,8 +441,7 @@ fun RegisterForm(
         onValueChange = { username = it.lowercase().replace(" ", "") },
         label = { Text("Username") },
         modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        placeholder = { Text("e.g. john_doe") }
+        singleLine = true
     )
 
     OutlinedTextField(
@@ -482,8 +476,7 @@ fun RegisterForm(
             onClick = { selectedRole = UserRole.TENANT },
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedRole == UserRole.TENANT)
-                    Color(0xFF6200EE) else Color.LightGray
+                containerColor = if (selectedRole == UserRole.TENANT) Color(0xFF6200EE) else Color.LightGray
             )
         ) {
             Text("Tenant")
@@ -492,8 +485,7 @@ fun RegisterForm(
             onClick = { selectedRole = UserRole.LESSOR },
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (selectedRole == UserRole.LESSOR)
-                    Color(0xFF6200EE) else Color.LightGray
+                containerColor = if (selectedRole == UserRole.LESSOR) Color(0xFF6200EE) else Color.LightGray
             )
         ) {
             Text("Lessor")
@@ -520,9 +512,7 @@ fun RegisterForm(
             )
         },
         modifier = Modifier.fillMaxWidth(),
-        enabled = !isLoading && name.isNotEmpty() &&
-                username.isNotEmpty() &&
-                email.isNotEmpty() && password.isNotEmpty()
+        enabled = !isLoading && name.isNotEmpty() && username.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()
     ) {
         Text(if (isLoading) "Registering..." else "Register")
     }

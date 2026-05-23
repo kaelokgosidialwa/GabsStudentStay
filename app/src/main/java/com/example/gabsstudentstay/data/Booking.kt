@@ -19,6 +19,6 @@ data class Booking(
     val moveInDate: Date = Date(),
     val moveOutDate: Date = Date(),
     val totalPrice: Int = 0,
-    val status: String = BookingStatus.PENDING.name,  // ← String not enum
+    val status: String = BookingStatus.PENDING.name,
     val createdAt: Date = Date()
 )

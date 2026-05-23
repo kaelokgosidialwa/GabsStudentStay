@@ -16,18 +16,28 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +47,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.gabsstudentstay.data.Listing
+import com.example.gabsstudentstay.data.ListingRepository
 import com.example.gabsstudentstay.navigation.Screen
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -52,6 +64,35 @@ fun BookingReceiptScreen(
 ) {
     val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
 
+    var listingID by remember { mutableStateOf("") }
+    var listing by remember { mutableStateOf<Listing?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(roomID) {
+        val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+        firestore.collection("rooms")
+            .document(roomID)
+            .get()
+            .addOnSuccessListener { document ->
+                listingID = document.getString("listingID") ?: ""
+                if (listingID.isNotEmpty()) {
+                    ListingRepository.getListingByID(
+                        listingID = listingID,
+                        onSuccess = { fetchedListing ->
+                            listing = fetchedListing
+                            isLoading = false
+                        },
+                        onError = { isLoading = false }
+                    )
+                } else {
+                    isLoading = false
+                }
+            }
+            .addOnFailureListener {
+                isLoading = false
+            }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,6 +101,14 @@ fun BookingReceiptScreen(
                         text = "Booking Receipt",
                         fontWeight = FontWeight.SemiBold
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
                 }
             )
         }
@@ -73,7 +122,6 @@ fun BookingReceiptScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // success icon
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -113,7 +161,6 @@ fun BookingReceiptScreen(
                 )
             }
 
-            // receipt card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -137,7 +184,6 @@ fun BookingReceiptScreen(
 
                         Divider()
 
-                        // reference number
                         ReceiptRow(
                             label = "Reference Number",
                             value = bookingID,
@@ -173,7 +219,6 @@ fun BookingReceiptScreen(
                 }
             }
 
-            // info card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -202,7 +247,40 @@ fun BookingReceiptScreen(
                 }
             }
 
-            // done button
+            item {
+                if (!isLoading && listing != null && listingID.isNotEmpty()) {
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.listingDetail(listingID)) {
+                                popUpTo(Screen.BookingReceipt.route) { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Home,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "View the Listing You Booked",
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                } else if (!isLoading && listingID.isEmpty()) {
+                    Button(
+                        onClick = { },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = false
+                    ) {
+                        Text("Listing information unavailable")
+                    }
+                }
+            }
+
             item {
                 Button(
                     onClick = {

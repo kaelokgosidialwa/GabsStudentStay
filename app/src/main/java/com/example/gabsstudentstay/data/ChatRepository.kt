@@ -28,12 +28,10 @@ object ChatRepository {
     private val firestore = FirebaseFirestore.getInstance()
     private val chatsCollection = firestore.collection("chats")
 
-    // generate consistent chatID from listingID and tenantID
     fun getChatID(listingID: String, tenantID: String): String {
         return "${listingID}_${tenantID}"
     }
 
-    // create or get existing chat
     fun getOrCreateChat(
         listingID: String,
         tenantID: String,
@@ -47,10 +45,8 @@ object ChatRepository {
             .get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
-                    // chat already exists
                     onSuccess(chatID)
                 } else {
-                    // create new chat
                     val chat = Chat(
                         chatID = chatID,
                         listingID = listingID,
@@ -72,7 +68,6 @@ object ChatRepository {
             }
     }
 
-    // send a message
     fun sendMessage(
         chatID: String,
         senderID: String,
@@ -89,14 +84,12 @@ object ChatRepository {
             read = false
         )
 
-        // save message to subcollection
         chatsCollection
             .document(chatID)
             .collection("messages")
             .document(messageID)
             .set(chatMessage)
             .addOnSuccessListener {
-                // update last message on chat document
                 chatsCollection.document(chatID)
                     .update(
                         mapOf(
@@ -114,7 +107,6 @@ object ChatRepository {
             }
     }
 
-    // listen to messages in real time
     fun listenToMessages(
         chatID: String,
         onMessagesChanged: (List<ChatMessage>) -> Unit,
@@ -136,7 +128,6 @@ object ChatRepository {
             }
     }
 
-    // get all chats for a user
     fun getUserChats(
         userID: String,
         role: String,
